@@ -1,5 +1,5 @@
 "use client";
-
+import "./Header.css"; // 👈 import the css file
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import Image from "next/image";
@@ -21,6 +21,35 @@ export type User = {
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const SaveNewUser = async (user: User) => {
+    try {
+      const check = await axios.get(
+        `http://localhost:1337/api/user-lists?filters[Email][$eq]=${user.email}`
+      );
+
+      if (check.data.data.length > 0) {
+        console.log("User already exists, skipping save.");
+        return;
+      }
+
+      const result = await axios.post("http://localhost:1337/api/user-lists", {
+        data: {
+          FullName: user.name,
+          Email: user.email,
+          profile_image: user.picture,
+        },
+      });
+      console.log("User saved:", result.data);
+    } catch (error: any) {
+      if (error.response) {
+        console.error("Strapi error:", error.response.data);
+      } else {
+        console.error("Error saving user:", error);
+      }
+    }
+  };
 
   const GetUserProfile = async (access_token: string) => {
     try {
@@ -30,8 +59,8 @@ export default function Header() {
           headers: { Authorization: "Bearer " + access_token },
         }
       );
-      console.log("GetUserProfile:", userInfo.data);
       setUser(userInfo.data);
+      SaveNewUser(userInfo.data);
     } catch (err) {
       localStorage.removeItem("tokenResponse");
       setUser(null);
@@ -52,72 +81,69 @@ export default function Header() {
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
-      console.log(tokenResponse);
       localStorage.setItem("tokenResponse", JSON.stringify(tokenResponse));
       await GetUserProfile(tokenResponse.access_token);
     },
     onError: (errorResponse) => console.log(errorResponse),
   });
 
-  return (
-    <header className="w-full bg-background shadow-md sticky top-0 z-50">
-      <div className="flex items-center px-6 py-4">
-        {/* Left: Logo */}
-        <div className="flex-shrink-0">
-          <Link href="/" className="flex items-center">
-            <Image
-              src="/ink_use_logo.svg"
-              alt="Ink&Use Logo"
-              width={140}
-              height={70}
-              priority
-              className="object-contain"
-            />
-          </Link>
-        </div>
+  const handleSignOut = () => {
+    localStorage.removeItem("tokenResponse");
+    setUser(null);
+    setDropdownOpen(false);
+  };
 
-        {/* Center: Navigation */}
-        <nav className="hidden md:flex flex-1 justify-center">
-          <ul className="flex gap-8">
-            {menu.map((item) => (
-              <li key={item.id}>
-                <Link
-                  href={item.path}
-                  className="text-foreground text-lg font-medium hover:text-blue-600 transition-colors duration-300"
-                >
-                  {item.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
+  return (
+    <header className="header">
+      <div className="header-container">
+        {/* Logo */}
+        <Link href="/" className="header-logo">
+          <Image
+            src="/ink_use_logo.svg"
+            alt="Ink&Use Logo"
+            width={140}
+            height={70}
+            priority
+          />
+        </Link>
+
+        {/* Navigation */}
+        <nav className="header-nav">
+          {menu.map((item) => (
+            <Link key={item.id} href={item.path}>
+              {item.name}
+            </Link>
+          ))}
         </nav>
 
-        {/* Right: Actions */}
-        <div className="ml-auto flex items-center gap-4">
+        {/* Actions */}
+        <div className="header-actions">
           {/* Cart */}
-          <Link
-            href="/cart"
-            className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 transition-transform transform hover:-translate-y-0.5 shadow-sm"
-          >
-            <Image src="/shopping_cart.svg" alt="Cart" width={24} height={24} />
+          <Link href="/cart" className="header-cart">
+            <Image src="/shopping_cart.svg" alt="Cart" width={22} height={22} />
           </Link>
 
-          {/* Login or Profile Image */}
+          {/* Login or Profile */}
           {!user ? (
-            <button
-              onClick={() => googleLogin()}
-              className="px-4 w-25 h-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-md hover:shadow-lg hover:-translate-y-1 transform transition-all duration-300 flex items-center justify-center"
-            >
+            <button onClick={() => googleLogin()} className="login-btn">
               Login
             </button>
           ) : (
-            <Image
-              src={user.picture}
-              alt={user.name}
-              width={40}
-              height={40}
-              className="rounded-full border-2 border-white shadow-md"
-            />
+            <div className="relative">
+              <Image
+                src={user.picture}
+                alt={user.name}
+                width={40}
+                height={40}
+                className="profile-img"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+              />
+              {dropdownOpen && (
+                <div className="dropdown">
+                  <button onClick={handleSignOut}>Sign Out</button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
