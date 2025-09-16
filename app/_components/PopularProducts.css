@@ -1,0 +1,54 @@
+.products-section {
+  margin: 40px auto;
+  text-align: center;
+  max-width: 1200px;
+}
+
+.products-title {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 25px;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* ✅ 4 cards per row */
+  gap: 20px;
+  padding: 0 20px;
+}
+
+.product-card {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden; /* ✅ ensures image fills full card */
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.product-img {
+  width: 100%;
+  height: 180px; /* fixed card height */
+  object-fit: contain; /* ✅ shows full image without cutting */
+  background-color: #f9f9f9; /* light background so transparent areas look clean */
+  padding: 10px; /* space around image so it’s not sticking to edges */
+}
+
+
+.product-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 10px 0 4px;
+}
+
+.product-price {
+  font-size: 14px;
+  font-weight: bold;
+  color: #e63946;
+  margin-bottom: 10px;
+}
